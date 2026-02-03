@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kedai Wahdiene</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #8b5e3c;   /* coklat kopi */
+      --secondary: #f2e8dc; /* krem */
+      --accent: #c97c5d;    /* caramel */
+    }
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: var(--secondary);
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: #fff;
+      display: grid;
+      grid-template-columns: 200px 1fr;
+    }
+    aside {
+      background: var(--primary);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    aside h1 {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-size: 32px;
+      margin: 0;
+      color: #fff;
+    }
+    aside p {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      margin-top: 20px;
+      color: #f7ede2;
+    }
+    main {
+      padding: 30px;
+    }
+    .menu-title {
+      background: var(--accent);
+      color: #fff;
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      text-align: center;
+      cursor: pointer;
+    }
+    .card img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+    .card h4 {
+      margin: 10px 0 4px;
+      font-weight: 500;
+    }
+    .card span {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .wa-btn {
+      display: block;
+      margin: 30px auto 0;
+      background: #25D366;
+      color: #fff;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 600;
+      width: fit-content;
+    }
+    footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 14px;
+      color: #777;
+    }
+    /* modal */
+    .modal{
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+      justify-content:center;align-items:center;z-index:999;
+    }
+    .modal-content{
+      background:#fff;padding:20px;border-radius:16px;max-width:320px;text-align:center
+    }
+    .modal-content img{width:100%;border-radius:12px}
+    .close{margin-top:10px;display:inline-block;color:var(--accent);cursor:pointer}
+
+    @media (max-width: 768px) {
+      .container { grid-template-columns: 1fr; }
+      aside {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+      aside h1, aside p {
+        writing-mode: horizontal-tb;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <aside>
+      <h1>Kedai Bakoel</h1>
+      <p>Kopi Omahan</p>
+    </aside>
+    <main>
+      <div class="menu-title">MENU</div>
+      <div class="menu-grid" id="menuGrid">
+        <!-- Menu dimuat dari Google Sheets -->
+      </div>
+
+      <a class="wa-btn" href="https://wa.me/6281369708482?text=Halo%20saya%20ingin%20pesan" target="_blank">🛒 Order via WhatsApp</a>
+      <footer>
+        <p>📞 +6281369708482 | 📍 bakoel kopi</p>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <img id="modalImg" />
+      <h4 id="modalTitle"></h4>
+      <p id="modalPrice"></p>
+      <a class="wa-btn" id="modalWa" target="_blank">Pesan via WhatsApp</a>
+      <div class="close" onclick="closeModal()">Tutup</div>
+    </div>
+  </div>
+
+  <script>
+    const SHEET_URL = 'PASTE_LINK_GOOGLE_SHEETS_CSV_DI_SINI';
+
+    fetch(SHEET_URL)
+      .then(res => res.text())
+      .then(csv => {
+        // FIX: gunakan newline yang benar
+        const rows = csv.split('\n').slice(1);
+        const grid = document.getElementById('menuGrid');
+        grid.innerHTML = '';
+
+        rows.forEach(row => {
+          if (!row.trim()) return;
+
+          const cols = row.split(',');
+          if (cols.length < 4) return;
+
+          const [nama, harga, gambar, stok] = cols;
+          if (stok.trim().toLowerCase() === 'habis') return;
+
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.onclick = () => openModal(card);
+          card.innerHTML = `
+            <img src="${gambar}" alt="${nama}" />
+            <h4>${nama}</h4>
+            <span>${parseInt(harga, 10).toLocaleString('id-ID')}</span>
+          `;
+          grid.appendChild(card);
+        });
+      })
+      .catch(err => {
+        console.error('Gagal memuat menu:', err);
+      });
+
+    function openModal(card){
+      document.getElementById('modal').style.display='flex';
+      document.getElementById('modalImg').src=card.querySelector('img').src;
+      document.getElementById('modalTitle').innerText=card.querySelector('h4').innerText;
+      document.getElementById('modalPrice').innerText='Harga: '+card.querySelector('span').innerText;
+      document.getElementById('modalWa').href='https://wa.me/6281369708482?text=Halo%20saya%20ingin%20pesan%20'+encodeURIComponent(card.querySelector('h4').innerText);
+    }
+    function closeModal(){document.getElementById('modal').style.display='none';}
+  </script>
+</body>
+</html>
